@@ -5,33 +5,29 @@ const { Pool } = require('pg');
 const Crypto = require('crypto');
 const ExpressBunyanLogger = require('express-bunyan-logger');
 const Os = require('os-utils');
-
 const config = require('./config');
 const { getLogger, initLoggerService, expressLoggerConfig } = require('./logger');
-
 const app = Express();
 const router = new Express.Router();
-
 initLoggerService();
-
 const pgClient = new Pool({
   host: config.dbHost,
   port: config.dbPort,
   user: config.dbUser,
   password: config.dbPassword,
   database: config.dbName,
-  ssl: {
-    rejectUnauthorized: false,
-    require: true,
-  },
+  // ssl: {
+  //  rejectUnauthorized: false,
+  //  require: true,
+  //},
 });
 
 pgClient.on('error', (e) => {
-  getLogger().debug(e);
+  throw e;
 });
 
 pgClient.query('CREATE TABLE IF NOT EXISTS books (title varchar(128))')
-  .catch((err) => getLogger().debug(err));
+  .catch((err) => { throw err; });
 
 app.use(Cors());
 app.use(BodyParser.json({ limit: '10mb' }));
@@ -44,7 +40,6 @@ router.route('/health').get(
     const cpuUtilization = await getCpuUtilizationPromise();
     const status = cpuUtilization > 0.5 ? 503 : 200;
     const statusCode = cpuUtilization > 0.5 ? 'Not OK' : 'OK';
-
     res.status(status).json({
       appName: 'API',
       version: process.env.npm_package_version,
@@ -121,6 +116,7 @@ process.on('unhandledRejection', (reason) => {
 
 process.on('uncaughtException', (error) => {
   getLogger().debug(error);
+  process.exit(1);
 });
 
 module.exports = app;
