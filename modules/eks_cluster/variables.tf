@@ -3,7 +3,9 @@ variable "app_name" {
 }
 
 variable "public_subnet_ids" {
-  type = list(string)
-  
+  type    = list(string)
+  default = ["subnet-12345678", "subnet-87654321"]
 }
+
+
 
